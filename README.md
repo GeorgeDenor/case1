@@ -208,6 +208,19 @@ ref: refs/heads/master
 
 Обратите внимание, файл может одновременно находиться в статусах `staged` и `modified`, если изменеия были внесены после команды `git add`. Тогда git закоммитит версию файла, которая была до измений. Еще раз примените `git add`, чтобы в `staged` попала новая версия файла.
 
+Вот так выглядит схема переходов статусов файлов в Git:
+
+```mermaid
+graph LR;
+  untracked -- "git add" --> staged;
+  staged    -- "git commit"     --> tracked/comitted;
+  staged  -- "changes in file" --> staged/modified;
+  tracked/comitted -- "changes in file" --> modified; 
+  staged/modified -- "git add" --> staged;
+  modified -- "git add" --> staged; 
+
+```
+
 ### Оформление комментариев к коммитам
 Комментарии к коммитам должны быть информативны и кратки. В них должно быть указано, что было изменено/добавлено, где и, иногда, почему. Часто используется инфинитивная форма глаголов. Есть несколько стилей оформления коммитов: **Корпоративный**, **Convertial Commits** и **GitHub-стиль**.
 
