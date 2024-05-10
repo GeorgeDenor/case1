@@ -581,3 +581,119 @@ $ git remote rm origin # эта команда удалит текущий origi
 $ git push <название ветки>
 ```
 
+### Вывод git log нскольких веток и в виде графа
+
+В виде графа:
+``` bash
+$ git log --graph --oneline
+```
+
+Нескольких веток
+``` bash
+$ git log --graph --oneline <branch1> <branch2>
+```
+
+## Продвинутая работа с ветками
+
+### Состояние fast-forward
+
+Две ветки находятся в состоянии fast-forward (**перемотка** англ.), если одну из них можно «перемотать» вперёд и она будет содержать те же коммиты, что и другая. Это утверждение можно сформулировать иначе:
+* при слиянии этих двух веток никак не возможен конфликт;
+* истории этих двух веток не «разошлись»;
+* одна ветка является продолжением другой.
+
+Представим, у нас есть ветка `main` из 4-х коммитов, из неё создадим ветку `add-docs` и добавим 2 коммита. Тогда все коммиты можно будет положить в `main`, и они выстроятся за существукющими.
+``` bash
+$ git checkout main
+$ git merge add-docs
+Updating 997d9ce..e08fa2a
+Fast-forward
+ docs.txt | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 docs.txt
+
+$ git log --oneline
+e08fa2a (HEAD -> main, add-docs) New docs 2
+fd588b2 New docs 1
+997d9ce Commit 4
+0313e8e Commit 3
+5848aba Commit 2
+04923d7 Commit 1 
+```
+* При слиянии веток Git выводит сроку `fast-forward`;
+* HEAD указывает одновременно на `main` и `add-docs`. После слияния эти ветки стали одинаковыми - в них оди и теже коммиты.
+
+#### Отключение fast-forward
+Для отключение слияния fast-forward-ом нужно использовать флаг `--no-ff` (например, `git merge --no-ff add-docs`). Также можно отключить ff навсегда, используя настройку `merge.ff` (`git config --global merge.ff false`).
+
+При отключении fast-forward, то вместо "перемотки" Git создаст в ветке коммит слияния (мёрж-коммит). Тогда бы результат вливания `add-docs` в `main` выглядел бы так:
+``` bash
+# находимся в ветке main
+# --no-edit отключает ввод сообщения для merge-коммита
+# --no-ff отключает fast-forward слияние веток
+$ git merge --no-edit --no-ff add-docs
+Merge made by the 'ort' strategy.
+ docs.txt | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 docs.txt
+
+# с флагом --graph
+# Git нарисует ветки с помощью «палочек» и «звёздочек»
+# получившийся коммит слияния: 6814789
+$ git log --graph --oneline
+*   6814789 (HEAD -> main) Merge branch 'add-docs'
+|\
+| * e08fa2a (add-docs) New docs 2
+| * fd588b2 New docs 1
+|/
+* 997d9ce Commit 4
+* 0313e8e Commit 3
+* 5848aba Commit 2
+* 04923d7 Commit 1
+```
+
+Fast-forward отключают, потому что при нём теряется часть информации. Результат выглядит так, как будто в `main` просто появились некоторые коммиты, если не хнать о ветке `add-docs`, то можно подумать, что такой ветки и не было. Полноценный коммит слияния сохраняет всю информацию, в нём указывается, какая ветка вливалась в `main`.
+
+### Non-fast-forward
+
+Допустим, истории двух веток разошлись. Напрмер, в `main` был добавлен коммит после создания ветки `add-docs`. С помощью команды `git log` посмотрим на текущее состояние:
+``` bash
+# команде git log можно указать несколько веток,
+# и тогда она выведет их все
+$ git log --graph --oneline main add-docs
+* 15d3f04 (HEAD -> main) Commit 5
+| * 8de42eb (add-docs) New docs 2
+| * 4d3c346 New docs 1
+|/
+* 73def1e Commit 4
+* 9c30ab3 Commit 3
+* 83cc5ec Commit 2
+* 8e87fb2 Commit 1
+```
+
+Теперь, в параллельных коммитах двух веток теоретически возможны конфликты при слиянии (Git е заглядывает в файлы, важно лишь, что конфликт теоретичеси возможен), поэтому Git не соединит их с помощью перемотки. Он создаст мёрдж-коммит.
+
+``` bash
+# находимся в ветке main
+# --no-edit избавляет от необходимости
+# вводить сообщение для merge-коммита
+$ git merge --no-edit add-docs
+Merge made by the 'ort' strategy.
+ docs.txt | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 docs.txt
+
+# коммит слияния: 34f5f8f
+$ git log --graph --oneline
+*   34f5f8f (HEAD -> main) Merge branch 'add-docs'
+|\
+| * 8de42eb (add-docs) New docs 2
+| * 4d3c346 New docs 1
+* | 15d3f04 Commit 5
+|/
+* 73def1e Commit 4
+* 9c30ab3 Commit 3
+* 83cc5ec Commit 2
+* 8e87fb2 Commit 1
+```
+Если конфликтов при слиянии не возникло, то команда отработает автоматически. Если конфликты есть, Git попытается решить их сам, если не получится, то попросит разрешить их вручную.
