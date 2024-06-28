@@ -753,3 +753,61 @@ $ git push --force
 
 После ревью необходимо одобрить реквест, потом автор реквеста или один из участников нажмёт кнопку `merge`.
 
+### Разрешение конфликтов
+При конфликте git выдаст:
+
+```bash
+$ git checkout main && git merge br2
+# ваша основная ветка может называться master
+
+Auto-merging readme.md
+CONFLICT (content): Merge conflict in readme.md
+Automatic merge failed; fix conflicts and then commit the result.
+```
+
+А в статусе бужет написано
+
+``` bash
+$ git status
+
+On branch main
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+    both modified:   readme.md
+```
+
+В поле unmerged paths указаны файлы с маркерами конфликтов.
+
+Если открыть такой файл, то в нём будут указаны спецфичиеские маркеры конфликтов
+
+```bash
+$ cat readme.md   
+
+<<<<<<< HEAD
+version 1
+=======
+version 2
+>>>>>>> br2
+```
+
+`<<<<<<<` указывает текущие изменения, которые хранятся в ветке-приёмнике,
+а `>>>>>>>` указывает изменения, которые хранятся в вливаемой ветке.
+
+Чтобы разрешить конфликт вручную, надо удалит все маркеры конфикта из файла и создать merge-commit `git commit --no-edit".
+
+#### Разрешение конфликтов через vimdiff
+
+Для более автоматизированного разрешения конфликта можно воспользоваться инструментом `vimdiff`, который вызывается командой:
+``` bash
+git mergetool
+```
+
+В процессе разрешения конфликта он создаст копию конфликтного файла с разрешением `.orig`, который после разрешения можно будет удалить. 
+
+#### Разрешение конфликтов через VSCode
+
+VSCode имеет своё интерфейс для разрешения конфликтов. Достаточно открыть файл с конфликтом, далее всё очевидно
